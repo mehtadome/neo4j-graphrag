@@ -148,8 +148,13 @@ See `scripts/README.md` for full details on each script, including whether it is
 ```bash
 python scripts/patch_spend_revenue.py   # one-time: patch missing CSV fields
 python scripts/embed_interactions.py    # one-time: generate and store embeddings
-python scripts/vector_app.py            # ongoing: contextual/relational questions
-python scripts/text2cypher_app.py       # ongoing: aggregation/analytical questions
+python scripts/graphrag_app.py          # main app with auto-routing
+```
+
+For isolated retriever testing:
+```bash
+python scripts/vector_app.py            # VectorCypherRetriever only
+python scripts/text2cypher_app.py       # Text2CypherRetriever only
 ```
 
 ---
@@ -159,8 +164,7 @@ python scripts/text2cypher_app.py       # ongoing: aggregation/analytical questi
 ```bash
 pip install -r requirements.txt
 python scripts/embed_interactions.py    # one-time embedding step
-python scripts/vector_app.py            # contextual questions
-python scripts/text2cypher_app.py       # aggregation questions
+python scripts/graphrag_app.py          # start the main app
 ```
 
 **`.env` keys:**
