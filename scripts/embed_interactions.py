@@ -8,13 +8,13 @@ Usage:
 
 import os
 from dotenv import load_dotenv
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, TrustAll
 from openai import OpenAI
 
 load_dotenv()
 
 NEO4J_URI      = os.environ["NEO4J_URI"]
-NEO4J_USER     = os.environ["NEO4J_USER"]
+NEO4J_USER     = os.environ["NEO4J_USERNAME"]
 NEO4J_PASSWORD = os.environ["NEO4J_PASSWORD"]
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
@@ -76,7 +76,7 @@ def write_embeddings(session, records, embeddings):
 
 
 def main():
-    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), trusted_certificates=TrustAll())
     client = OpenAI(api_key=OPENAI_API_KEY)
 
     with driver.session() as session:
