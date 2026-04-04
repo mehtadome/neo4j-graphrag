@@ -53,8 +53,12 @@ def main() -> None:
     regions = ["NA", "EMEA", "APAC", "LATAM"]
 
     # Stable preferences per customer for relational clustering
+    deal_pool = [f"DEAL-{i:04d}" for i in range(1000, 1120)]
     cust_segment = {c: random.choice(segments) for c in customers}
     cust_region = {c: random.choice(regions) for c in customers}
+    cust_deals = {
+        c: random.sample(deal_pool, k=random.randint(1, 2)) for c in customers
+    }
     campaign_agency = {camp: random.choice(agencies) for camp in campaigns}
     campaign_product_bias = {camp: random.sample(products, k=random.randint(2, 6)) for camp in campaigns}
 
@@ -114,11 +118,7 @@ def main() -> None:
 
         spend = spend_for(channel, event)
         revenue = revenue_for(event)
-
-        deal_id = ""
-        if event in ("demo_booked", "trial_start", "purchase", "mql"):
-            if random.random() < 0.55:
-                deal_id = f"DEAL-{random.randint(1000, 9999)}"
+        deal_id = random.choice(cust_deals[customer_id])
 
         rows.append(
             {
