@@ -13,6 +13,7 @@ from neo4j_graphrag.retrievers import VectorCypherRetriever
 from neo4j_graphrag.llm import OpenAILLM
 from neo4j_graphrag.embeddings import OpenAIEmbeddings
 from neo4j_graphrag.generation import GraphRAG
+from neo4j_graphrag.types import RetrieverResultItem
 
 load_dotenv()
 
@@ -53,20 +54,16 @@ SAMPLE_QUESTIONS = [
 
 
 def build_rag(driver):
-    embedder = OpenAIEmbeddings(
-        model="text-embedding-3-small",
-        openai_api_key=OPENAI_API_KEY,
-    )
+    embedder = OpenAIEmbeddings(model="text-embedding-3-small")
     retriever = VectorCypherRetriever(
         driver=driver,
         index_name="interaction_embeddings",
         embedder=embedder,
         retrieval_query=RETRIEVAL_QUERY,
-        result_formatter=lambda r: r.get("text", ""),
+        result_formatter=lambda r: RetrieverResultItem(content=r.get("text", "")),
     )
     llm = OpenAILLM(
         model_name="gpt-4o-mini",
-        openai_api_key=OPENAI_API_KEY,
         model_params={"temperature": 0},
     )
     return GraphRAG(retriever=retriever, llm=llm)
