@@ -18,4 +18,4 @@
 - [x] Confirm `vector_app.py` and `text2cypher_app.py` work independently
 
 ## Final
-- [ ] Merge vector and text2cypher apps into a single `graphrag_app.py` with auto-routing
+- [x] Merge vector and text2cypher apps into a single `graphrag_app.py` with auto-routing
