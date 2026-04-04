@@ -19,3 +19,12 @@
 
 ## Final
 - [x] Merge vector and text2cypher apps into a single `graphrag_app.py` with auto-routing
+
+## Aura Agent (console UI)
+- [ ] Open Neo4j Aura console and navigate to the Agent builder
+- [ ] Connect agent to the existing graph (instance `1e4a65b0`)
+- [ ] Verify the agent can see the vector index `interaction_embeddings`
+- [ ] Test with contextual questions (customer journey, demo → purchase)
+- [ ] Test with aggregation questions (ROI by campaign, revenue by agency)
+- [ ] Note where it succeeds vs. where the custom pipeline does better
+- [ ] Document differences in `interview.md`
