@@ -1,6 +1,10 @@
 # Aura
 
-Basic Python project scaffold for Neo4j Aura–related work.
+Marketing attribution GraphRAG demo built on Neo4j Aura.
+
+## Graph Model
+
+![Graph Model](assets/graph-model.png)
 
 ## Setup
 
