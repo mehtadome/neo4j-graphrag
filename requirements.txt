@@ -1,0 +1,2 @@
+# Core dependencies — add packages as needed, e.g.:
+# neo4j>=5.0
