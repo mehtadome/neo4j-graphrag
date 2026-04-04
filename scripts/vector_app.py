@@ -1,9 +1,10 @@
 """
-Step 2: GraphRAG application using Neo4j + OpenAI.
-Asks questions in natural language, retrieves graph context, answers via GPT-4o-mini.
+GraphRAG app using VectorCypherRetriever.
+Best for contextual and relational questions — finds semantically similar Interaction
+nodes via vector search, then traverses the graph to pull in connected context.
 
 Usage:
-    python scripts/graphrag_app.py
+    python scripts/vector_app.py
 """
 
 import os
@@ -20,7 +21,6 @@ load_dotenv()
 NEO4J_URI      = os.environ["NEO4J_URI"]
 NEO4J_USER     = os.environ["NEO4J_USERNAME"]
 NEO4J_PASSWORD = os.environ["NEO4J_PASSWORD"]
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 # After each vector-matched Interaction node, traverse the graph to pull in
 # connected context (Customer, Campaign, Agency, Product, Deal).
@@ -45,16 +45,15 @@ RETURN
 """
 
 SAMPLE_QUESTIONS = [
-    "Which agencies drove the most revenue from Enterprise customers?",
-    "What channels are most effective at generating purchase events?",
-    "Which products have the highest revenue in the APAC region?",
     "What is the typical customer journey before a purchase event?",
-    "Which campaigns have the best return on spend?",
+    "What products did customers who booked a demo end up purchasing?",
+    "Which agencies drove the most revenue from Enterprise customers?",
 ]
 
 
 def build_rag(driver):
     embedder = OpenAIEmbeddings(model="text-embedding-3-small")
+    llm = OpenAILLM(model_name="gpt-4o-mini", model_params={"temperature": 0})
     retriever = VectorCypherRetriever(
         driver=driver,
         index_name="interaction_embeddings",
@@ -62,18 +61,17 @@ def build_rag(driver):
         retrieval_query=RETRIEVAL_QUERY,
         result_formatter=lambda r: RetrieverResultItem(content=r.get("text", "")),
     )
-    llm = OpenAILLM(
-        model_name="gpt-4o-mini",
-        model_params={"temperature": 0},
-    )
     return GraphRAG(retriever=retriever, llm=llm)
 
 
 def main():
-    driver = GraphDatabase.driver(NEO4J_URI.replace("neo4j+s://", "neo4j+ssc://"), auth=(NEO4J_USER, NEO4J_PASSWORD))
+    driver = GraphDatabase.driver(
+        NEO4J_URI.replace("neo4j+s://", "neo4j+ssc://"),
+        auth=(NEO4J_USER, NEO4J_PASSWORD),
+    )
     rag = build_rag(driver)
 
-    print("\nMarketing GraphRAG — type a question or 'demo' to run sample questions.\n")
+    print("\nMarketing GraphRAG (VectorCypher) — type a question or 'demo' to run sample questions.\n")
 
     while True:
         user_input = input("Question: ").strip()

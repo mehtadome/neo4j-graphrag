@@ -10,5 +10,12 @@
 - [x] Generate and store OpenAI embeddings (`scripts/embed_interactions.py`)
 
 ## Demo
-- [ ] Run GraphRAG app and verify `demo` mode returns sensible answers (`scripts/graphrag_app.py`)
-- [ ] Confirm all 5 sample questions produce coherent, graph-grounded responses
+- [x] Run GraphRAG app and verify `demo` mode returns sensible answers
+- [x] Confirm all 5 sample questions produce coherent, graph-grounded responses
+
+## Text2Cypher
+- [x] Run `text2cypher_app.py` and verify aggregation questions return correct results
+- [x] Confirm `vector_app.py` and `text2cypher_app.py` work independently
+
+## Final
+- [ ] Merge vector and text2cypher apps into a single `graphrag_app.py` with auto-routing

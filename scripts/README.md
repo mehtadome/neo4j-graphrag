@@ -7,7 +7,10 @@
 **One-time.** Patches `spend_usd` and `revenue_usd` onto `Interaction` nodes in Neo4j. Needed because the Aura Data Importer silently skipped these columns during the initial graph import — they exist in the CSV but were never mapped to node properties.
 
 ## `embed_interactions.py`
-**One-time.** Fetches all `Interaction` nodes from Neo4j, builds a descriptive sentence for each by traversing to related `Customer`, `Campaign`, `Agency`, `Product`, and `Deal` nodes, then calls OpenAI `text-embedding-3-small` to generate 1536-dim vectors. Writes embeddings back to `Interaction.embedding` and creates the `interaction_embeddings` vector index. Must be run after `patch_spend_revenue.py` and before `graphrag_app.py`.
+**One-time.** Fetches all `Interaction` nodes from Neo4j, builds a descriptive sentence for each by traversing to related `Customer`, `Campaign`, `Agency`, `Product`, and `Deal` nodes, then calls OpenAI `text-embedding-3-small` to generate 1536-dim vectors. Writes embeddings back to `Interaction.embedding` and creates the `interaction_embeddings` vector index. Must be run after `patch_spend_revenue.py` and before either app.
 
-## `graphrag_app.py`
-**Ongoing.** Interactive GraphRAG app. Accepts natural language questions, embeds them, finds semantically similar `Interaction` nodes via the vector index, traverses the graph for relational context, and answers via `gpt-4o-mini`. Type `demo` to run 5 sample questions, or `exit` to quit.
+## `vector_app.py`
+**Ongoing.** Interactive GraphRAG app using `VectorCypherRetriever`. Best for contextual and relational questions — finds semantically similar `Interaction` nodes via vector search, then traverses the graph to pull in connected customer, campaign, agency, and product context. Type `demo` to run sample questions, or `exit` to quit.
+
+## `text2cypher_app.py`
+**Ongoing.** Interactive GraphRAG app using `Text2CypherRetriever`. Best for analytical and aggregation questions — the LLM generates a Cypher query that runs against the full graph rather than a top-K slice. Type `demo` to run sample questions, or `exit` to quit.

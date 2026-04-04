@@ -148,7 +148,8 @@ See `scripts/README.md` for full details on each script, including whether it is
 ```bash
 python scripts/patch_spend_revenue.py   # one-time: patch missing CSV fields
 python scripts/embed_interactions.py    # one-time: generate and store embeddings
-python scripts/graphrag_app.py          # ongoing: interactive GraphRAG app
+python scripts/vector_app.py            # ongoing: contextual/relational questions
+python scripts/text2cypher_app.py       # ongoing: aggregation/analytical questions
 ```
 
 ---
@@ -156,10 +157,10 @@ python scripts/graphrag_app.py          # ongoing: interactive GraphRAG app
 ## Environment Setup
 
 ```bash
-cp .env.example .env   # fill in your values
 pip install -r requirements.txt
-python scripts/embed_interactions.py   # one-time embedding step
-python scripts/graphrag_app.py         # start the app
+python scripts/embed_interactions.py    # one-time embedding step
+python scripts/vector_app.py            # contextual questions
+python scripts/text2cypher_app.py       # aggregation questions
 ```
 
 **`.env` keys:**
