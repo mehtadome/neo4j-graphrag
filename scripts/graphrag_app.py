@@ -13,11 +13,12 @@ from neo4j_graphrag.retrievers import VectorCypherRetriever
 from neo4j_graphrag.llm import OpenAILLM
 from neo4j_graphrag.embeddings import OpenAIEmbeddings
 from neo4j_graphrag.generation import GraphRAG
+from neo4j_graphrag.types import RetrieverResultItem
 
 load_dotenv()
 
 NEO4J_URI      = os.environ["NEO4J_URI"]
-NEO4J_USER     = os.environ["NEO4J_USER"]
+NEO4J_USER     = os.environ["NEO4J_USERNAME"]
 NEO4J_PASSWORD = os.environ["NEO4J_PASSWORD"]
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
@@ -53,27 +54,23 @@ SAMPLE_QUESTIONS = [
 
 
 def build_rag(driver):
-    embedder = OpenAIEmbeddings(
-        model="text-embedding-3-small",
-        openai_api_key=OPENAI_API_KEY,
-    )
+    embedder = OpenAIEmbeddings(model="text-embedding-3-small")
     retriever = VectorCypherRetriever(
         driver=driver,
         index_name="interaction_embeddings",
         embedder=embedder,
         retrieval_query=RETRIEVAL_QUERY,
-        result_formatter=lambda r: r.get("text", ""),
+        result_formatter=lambda r: RetrieverResultItem(content=r.get("text", "")),
     )
     llm = OpenAILLM(
         model_name="gpt-4o-mini",
-        openai_api_key=OPENAI_API_KEY,
         model_params={"temperature": 0},
     )
     return GraphRAG(retriever=retriever, llm=llm)
 
 
 def main():
-    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+    driver = GraphDatabase.driver(NEO4J_URI.replace("neo4j+s://", "neo4j+ssc://"), auth=(NEO4J_USER, NEO4J_PASSWORD))
     rag = build_rag(driver)
 
     print("\nMarketing GraphRAG — type a question or 'demo' to run sample questions.\n")

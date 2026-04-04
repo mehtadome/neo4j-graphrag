@@ -60,9 +60,21 @@ This project is a **marketing attribution GraphRAG demo** built on Neo4j Aura fo
 - `Session` nodes were added post-import via Cypher (see below)
 - Vector index `interaction_embeddings` created on `Interaction.embedding` (1536 dims, cosine)
 
+> **Known import gap:** `spend_usd` and `revenue_usd` were not mapped as properties on `Interaction` nodes during the initial Aura Data Importer run. They must be patched post-import via `LOAD CSV` (see Cypher reference below). Good interview callout â€” the Data Importer silently skips unmapped columns, so always verify properties exist with `MATCH (i:Interaction) RETURN keys(i) LIMIT 1` after import.
+
 ---
 
 ## Cypher Reference
+
+### Patch missing spend_usd / revenue_usd on Interaction nodes (run once)
+```cypher
+LOAD CSV WITH HEADERS FROM
+  'https://raw.githubusercontent.com/mehtadome/neo4j-graphrag-demo/main/data/marketing_interactions.csv'
+AS row
+MATCH (i:Interaction {interaction_id: row.interaction_id})
+SET i.spend_usd   = toFloat(row.spend_usd),
+    i.revenue_usd = toFloat(row.revenue_usd)
+```
 
 ### Add Session nodes (run once if not already done)
 ```cypher
@@ -130,21 +142,13 @@ The graph traversal in step 3 is what separates GraphRAG from plain vector RAG â
 
 ## Scripts
 
-### `scripts/generate_marketing_sample.py`
-Regenerates `data/marketing_interactions.csv`. Seed is fixed at 42 for reproducibility.
+See `scripts/README.md` for full details on each script, including whether it is one-time or ongoing and why.
 
-### `scripts/embed_interactions.py`
-Run **once** after initial import. Generates OpenAI embeddings for all `Interaction` nodes and writes them back to Neo4j. Also creates the vector index.
-
+**Run order:**
 ```bash
-python scripts/embed_interactions.py
-```
-
-### `scripts/graphrag_app.py`
-Interactive GraphRAG app. Type a question or `demo` to run 5 sample questions.
-
-```bash
-python scripts/graphrag_app.py
+python scripts/patch_spend_revenue.py   # one-time: patch missing CSV fields
+python scripts/embed_interactions.py    # one-time: generate and store embeddings
+python scripts/graphrag_app.py          # ongoing: interactive GraphRAG app
 ```
 
 ---
