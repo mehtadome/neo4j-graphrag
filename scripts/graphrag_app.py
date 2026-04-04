@@ -8,7 +8,7 @@ Usage:
 
 import os
 from dotenv import load_dotenv
-from neo4j import GraphDatabase, TrustAll
+from neo4j import GraphDatabase
 from neo4j_graphrag.retrievers import VectorCypherRetriever
 from neo4j_graphrag.llm import OpenAILLM
 from neo4j_graphrag.embeddings import OpenAIEmbeddings
@@ -73,7 +73,7 @@ def build_rag(driver):
 
 
 def main():
-    driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), trusted_certificates=TrustAll())
+    driver = GraphDatabase.driver(NEO4J_URI.replace("neo4j+s://", "neo4j+ssc://"), auth=(NEO4J_USER, NEO4J_PASSWORD))
     rag = build_rag(driver)
 
     print("\nMarketing GraphRAG — type a question or 'demo' to run sample questions.\n")
