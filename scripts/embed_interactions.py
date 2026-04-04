@@ -1,6 +1,5 @@
 """
-Step 1: Generate OpenAI embeddings for Interaction nodes and write them back to Neo4j.
-Run this once before starting the GraphRAG app.
+Generate OpenAI embeddings for Interaction nodes and store them on Neo4j.
 
 Usage:
     python scripts/embed_interactions.py
@@ -18,16 +17,17 @@ NEO4J_USER     = os.environ["NEO4J_USERNAME"]
 NEO4J_PASSWORD = os.environ["NEO4J_PASSWORD"]
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
-EMBEDDING_MODEL = "text-embedding-3-small"  # 1536 dimensions, cheapest OpenAI embeddings
-BATCH_SIZE = 100  # OpenAI supports up to 2048 inputs per request
+# Model output size must match the vector index dimensions below (1536).
+EMBEDDING_MODEL = "text-embedding-3-small"
+# Chunk size for OpenAI embedding API calls (well under the per-request input limit).
+BATCH_SIZE = 100
 
 
 def fetch_interactions(session):
-    # Traverse the graph to collect each Interaction alongside its related context.
-    # We join to Campaign, Agency, Customer, and Product via mandatory relationships,
-    # then optionally join to Deal (not all interactions are linked to a deal).
-    # This multi-hop traversal is the core of GraphRAG — we're pulling relational
-    # context that would be impossible to get from a flat document embedding alone.
+    # Run one Cypher query that walks from each Interaction to its related nodes.
+    # Mandatory paths ensure we only return interactions that have campaign, customer, and product.
+    # Optional deal link covers rows where there is no deal yet.
+    # Returned columns become the fields used to build embeddable text.
     return session.run("""
         MATCH (i:Interaction)-[:DURING_CAMPAIGN]->(c:Campaign)-[:MANAGED_BY]->(a:Agency),
               (i)<-[:HAD_INTERACTION]-(cu:Customer),
@@ -49,12 +49,10 @@ def fetch_interactions(session):
 
 
 def build_text(record):
-    # Convert a graph record into a single descriptive sentence.
-    # This sentence is what actually gets embedded — the richer and more specific it is,
-    # the better the vector search will perform at query time.
-    # Fields like segment, region, agency, and deal give the embedding relational meaning
-    # that a raw event log row would not have on its own.
+    # Append deal wording only when OPTIONAL MATCH found a deal; otherwise omit it.
     deal_part = f" linked to {record['deal']}" if record["deal"] else ""
+    # Assemble one natural-language line so the embedding captures channel, segment, geography,
+    # campaign, agency, optional deal, and money fields—not just a bare event type.
     return (
         f"{record['event_type']} interaction via {record['channel']} "
         f"for product {record['product']} by {record['segment']} customer "
@@ -65,10 +63,8 @@ def build_text(record):
 
 
 def create_vector_index(session):
-    # Create a vector index on Interaction.embedding if one doesn't already exist.
-    # The index dimensions must exactly match the embedding model output (1536 for
-    # text-embedding-3-small). Cosine similarity is standard for semantic search.
-    # IF NOT EXISTS makes this safe to re-run without error.
+    # Declare a cosine vector index on Interaction.embedding so later GraphRAG queries can do similarity search.
+    # IF NOT EXISTS keeps reruns idempotent; dimensions must match EMBEDDING_MODEL output.
     session.run("""
         CREATE VECTOR INDEX interaction_embeddings IF NOT EXISTS
         FOR (i:Interaction) ON (i.embedding)
@@ -81,36 +77,33 @@ def create_vector_index(session):
 
 
 def write_embeddings(session, records, embeddings):
-    # Write each embedding vector back to its Interaction node as the `embedding` property.
-    # UNWIND lets us send a full batch in one Bolt round-trip rather than one query per node,
-    # which is significantly faster at scale. We match by interaction_id to ensure we're
-    # setting the right embedding on the right node.
+    # Pair each graph row with its corresponding vector in the same order as the API returned them.
+    rows = [{"id": r["id"], "embedding": e} for r, e in zip(records, embeddings)]
+    # UNWIND turns that list into rows inside one transaction: match each Interaction by id and set embedding.
     session.run("""
         UNWIND $rows AS row
         MATCH (i:Interaction {interaction_id: row.id})
         SET i.embedding = row.embedding
-    """, rows=[{"id": r["id"], "embedding": e} for r, e in zip(records, embeddings)])
+    """, rows=rows)
 
 
 def main():
-    # neo4j+s:// enforces TLS with certificate verification. We swap to neo4j+ssc://
-    # (self-signed certificate) to bypass the macOS SSL chain verification issue
-    # without disabling encryption entirely.
+    # Open a Bolt driver; neo4j+ssc avoids strict cert verification issues some macOS setups hit with neo4j+s.
     driver = GraphDatabase.driver(NEO4J_URI.replace("neo4j+s://", "neo4j+ssc://"), auth=(NEO4J_USER, NEO4J_PASSWORD))
     client = OpenAI(api_key=OPENAI_API_KEY)
 
     with driver.session() as session:
+        # Ensure the vector index exists before we start writing embedding properties.
         create_vector_index(session)
 
         print("Fetching interactions from Neo4j...")
         records = fetch_interactions(session)
         print(f"Found {len(records)} interactions.")
 
-        # Build the text representation of each interaction before hitting the OpenAI API
+        # Turn every DB row into the string that will be embedded (same order as records).
         texts = [build_text(r) for r in records]
 
-        # Send texts to OpenAI in batches to generate embedding vectors.
-        # Each vector is a list of 1536 floats representing the semantic meaning of the text.
+        # Call OpenAI in slices: each call returns one vector per input string; accumulate in order.
         print("Generating embeddings via OpenAI...")
         all_embeddings = []
         for i in range(0, len(texts), BATCH_SIZE):
@@ -119,7 +112,7 @@ def main():
             all_embeddings.extend([item.embedding for item in response.data])
             print(f"  Embedded {min(i + BATCH_SIZE, len(texts))}/{len(texts)}")
 
-        # Write embeddings back to Neo4j in batches matching the fetch order
+        # Persist vectors back to Neo4j in the same batching pattern to limit payload size per query.
         print("Writing embeddings back to Neo4j...")
         for i in range(0, len(records), BATCH_SIZE):
             write_embeddings(
