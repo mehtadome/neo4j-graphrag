@@ -12,6 +12,9 @@
 ## `graphrag_app.py` — MAIN APP
 **Ongoing.** The primary entry point. Auto-routes each question to the correct retriever based on keyword detection — `Text2CypherRetriever` for aggregation questions, `VectorCypherRetriever` for contextual/relational ones. Prints `[retriever: ...]` on each response so the routing decision is visible. Type `demo` to run all 5 sample questions, or `exit` to quit.
 
+## `hybrid_app.py`
+**Ongoing.** GraphRAG app with three-way routing: detects whether a question is contextual, aggregate, or hybrid. Contextual and aggregate questions route to a single retriever as normal. Hybrid questions run both `VectorCypherRetriever` and `Text2CypherRetriever` in parallel, concatenate their results, and synthesize a single answer via a final LLM call. Prints `[mode: ...]` on each response. Type `demo` to run 5 sample questions spanning all three modes.
+
 ## `vector_app.py`
 **Ongoing (isolated testing).** Runs only `VectorCypherRetriever`. Use this to test or demo the vector search + graph traversal path in isolation, without the auto-router.
 
