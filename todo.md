@@ -23,8 +23,8 @@
 ## Hybrid Retrieval
 - [x] Research `HybridRetriever` in `neo4j-graphrag` and understand result merging
 - [x] Create `scripts/hybrid_app.py` — runs both retrievers in parallel and synthesizes a combined answer
-- [ ] Test with hybrid questions (e.g. "Which agency drove the most revenue from customers who booked a demo?")
-- [ ] Document tradeoffs (latency, API cost, answer quality) in `interview.md`
+- [x] Test with hybrid questions (e.g. "Which agency drove the most revenue from customers who booked a demo?")
+- [x] Document tradeoffs (latency, API cost, answer quality) in `interview.md`
 
 ## Aura Agent (console UI)
 - [x] Open Neo4j Aura console and navigate to the Agent builder
