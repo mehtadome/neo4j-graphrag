@@ -20,6 +20,12 @@
 ## Final
 - [x] Merge vector and text2cypher apps into a single `graphrag_app.py` with auto-routing
 
+## Hybrid Retrieval
+- [ ] Research `HybridRetriever` in `neo4j-graphrag` and understand result merging
+- [ ] Create `scripts/hybrid_app.py` — runs both retrievers in parallel and synthesizes a combined answer
+- [ ] Test with hybrid questions (e.g. "Which agency drove the most revenue from customers who booked a demo?")
+- [ ] Document tradeoffs (latency, API cost, answer quality) in `interview.md`
+
 ## Aura Agent (console UI)
 - [ ] Open Neo4j Aura console and navigate to the Agent builder
 - [ ] Connect agent to the existing graph (instance `1e4a65b0`)
