@@ -58,5 +58,5 @@ python scripts/text2cypher_app.py       # Text2CypherRetriever only
 ## Requirements
 
 - Python 3.10+
-- Neo4j Aura instance with the marketing interactions graph loaded
+- Neo4j Aura instance with the marketing interactions graph loaded — the instance must be running before starting any script
 - OpenAI API key (embeddings + GPT-4o-mini)
