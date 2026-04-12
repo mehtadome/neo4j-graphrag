@@ -55,6 +55,10 @@ python scripts/vector_app.py            # VectorCypherRetriever only
 python scripts/text2cypher_app.py       # Text2CypherRetriever only
 ```
 
+## Example Responses
+
+See [examples.md](examples.md) for live responses from the graph across all five sample questions, including which retriever was used for each.
+
 ## Requirements
 
 - Python 3.10+
