@@ -24,7 +24,7 @@
 - [x] Research `HybridRetriever` in `neo4j-graphrag` and understand result merging
 - [x] Create `scripts/hybrid_app.py` — runs both retrievers in parallel and synthesizes a combined answer
 - [x] Test with hybrid questions (e.g. "Which agency drove the most revenue from customers who booked a demo?")
-- [x] Document tradeoffs (latency, API cost, answer quality) in `interview.md`
+- [x] Document tradeoffs (latency, API cost, answer quality)
 
 ## Aura Agent (console UI)
 - [x] Open Neo4j Aura console and navigate to the Agent builder
@@ -33,4 +33,4 @@
 - [x] Test with contextual questions (customer journey, demo → purchase)
 - [x] Test with aggregation questions (ROI by campaign, revenue by agency)
 - [x] Note where it succeeds vs. where the custom pipeline does better
-- [x] Document differences in `interview.md`
+- [x] Document differences between the local agent and Aura agent
