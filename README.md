@@ -50,6 +50,7 @@ OPENAI_API_KEY=sk-...
 python scripts/patch_spend_revenue.py   # one-time: patch missing CSV fields
 python scripts/embed_interactions.py    # one-time: generate and store embeddings
 python scripts/graphrag_app.py          # main app with auto-routing
+python scripts/hybrid_app.py            # advanced app with parallel fusion
 ```
 
 For isolated retriever testing:
