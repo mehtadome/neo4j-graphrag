@@ -180,13 +180,13 @@ def main():
                 print(f"\nQ: {q}")
                 # Custom search to handle both retriever types
                 result = search(rag_vector, rag_cypher, q)
-                print(f"\n{'='*60}\n{result.answer}\n{'='*60}\n")
+                print(f"\n\n{'='*60}\n{result.answer}\n{'='*60}\n")
 
         # Run user question if user types anything else
         else:
             # Custom search to handle both retriever types
             result = search(rag_vector, rag_cypher, user_input)
-            print(f"\n{'='*60}\n{result.answer}\n{'='*60}\n")
+            print(f"\n\n{'='*60}\n{result.answer}\n{'='*60}\n")
 
     driver.close()
 
