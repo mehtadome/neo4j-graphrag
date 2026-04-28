@@ -4,7 +4,7 @@ Marketing attribution GraphRAG demo built on Neo4j Aura. The project was built i
 
 **The core tradeoff between an Aura Agent and a custom pipeline:**
 * Aura's agent is zero setup and controls everything itself.
-* `hybrid_app` requires wiring everything yourself but gives you full control over the model, routing logic, retrieval query, and prompts.
+* `hybrid_app` requires wiring everything yourself but gives you full control over the model, routing logic, retrieval query, and prompts, but equal responsibility handling edge cases, token limitations, etc.
 
 ## Architecture
 
