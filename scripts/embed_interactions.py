@@ -1,8 +1,15 @@
 """
-Generate OpenAI embeddings for Interaction nodes and store them on Neo4j.
+Generate OpenAI embeddings for Interaction nodes and store them on Neo4j. 
 
 Usage:
     python scripts/embed_interactions.py
+
+Note to author, this script will:
+* CREATE VECTOR INDEX - whenever an Interaction has an embedding property, index it for similarity search.
+* FETCH INTERACTIONS - fetch all valid interactions and their valid paths.
+* BUILD TEXT - build a natural-language string for each interaction because OpenAI's embedding model is trained on natural language.
+* GENERATE EMBEDDINGS - generate vector embeddings for each interaction using OpenAI.
+* WRITE EMBEDDINGS - write the embeddings back to Neo4j.
 """
 
 import os
@@ -29,9 +36,19 @@ def fetch_interactions(session):
     # Optional deal link covers rows where there is no deal yet.
     # Returned columns become the fields used to build embeddable text.
     return session.run("""
-        MATCH (i:Interaction)-[:DURING_CAMPAIGN]->(c:Campaign)-[:MANAGED_BY]->(a:Agency),
-              (i)<-[:HAD_INTERACTION]-(cu:Customer),
-              (i)-[:FOR_PRODUCT]->(p:Product)
+        # Match interaction to campaign to agency to customer to product
+        MATCH (i:Interaction)-[:DURING_CAMPAIGN]->
+
+        # What campaign ran this intereaction and what agency managed it?
+        (c:Campaign)-[:MANAGED_BY]->(a:Agency),
+
+            # What customer did this interaction belong to?
+            (i)<-[:HAD_INTERACTION]-(cu:Customer),
+
+            # What product was this interaction for?
+            (i)-[:FOR_PRODUCT]->(p:Product)
+
+        # Include the deal if it exists
         OPTIONAL MATCH (i)-[:LINKED_TO_DEAL]->(d:Deal)
         RETURN
             i.interaction_id  AS id,
@@ -49,15 +66,16 @@ def fetch_interactions(session):
 
 
 def build_text(record):
-    # Append deal wording only when OPTIONAL MATCH found a deal; otherwise omit it.
+    # If deal exists (returns from OPTIONAL MATCH), append deal wording "linked to {deal}"
     deal_part = f" linked to {record['deal']}" if record["deal"] else ""
-    # Assemble one natural-language line so the embedding captures channel, segment, geography,
-    # campaign, agency, optional deal, and money fields—not just a bare event type.
+    # OpenAI's embedding model is trained on natural language. Higher semantic meaning is captured in the embedding.
     return (
+        # Concatenate all the fields into a single string, ex: "purchase interaction via email for product SKU-014 by Enterprise customer"
         f"{record['event_type']} interaction via {record['channel']} "
         f"for product {record['product']} by {record['segment']} customer "
         f"in {record['region']}, campaign {record['campaign']} "
         f"managed by {record['agency']}{deal_part}, "
+        # None or 0 evalutates to 0
         f"spend ${record['spend_usd'] or 0:.2f}, revenue ${record['revenue_usd'] or 0:.2f}"
     )
 
@@ -66,8 +84,13 @@ def create_vector_index(session):
     # Declare a cosine vector index on Interaction.embedding so later GraphRAG queries can do similarity search.
     # IF NOT EXISTS keeps reruns idempotent; dimensions must match EMBEDDING_MODEL output.
     session.run("""
+        # Declare vector index for Neo4j tracking every time
         CREATE VECTOR INDEX interaction_embeddings IF NOT EXISTS
+
+        # Set embedding property on the Interaction node
         FOR (i:Interaction) ON (i.embedding)
+
+        # Must match our embedding model output size
         OPTIONS {indexConfig: {
             `vector.dimensions`: 1536,
             `vector.similarity_function`: 'cosine'
@@ -103,16 +126,20 @@ def main():
         # Turn every DB row into the string that will be embedded (same order as records).
         texts = [build_text(r) for r in records]
 
-        # Call OpenAI in slices: each call returns one vector per input string; accumulate in order.
+        # Send all 500 texts to OpainAI in batches of 100 and collect the vectors
         print("Generating embeddings via OpenAI...")
         all_embeddings = []
+        # 0, 100, 200, 300, 400
         for i in range(0, len(texts), BATCH_SIZE):
+            # slice our current 100 strings
             batch = texts[i : i + BATCH_SIZE]
+            # One API call, returns list of embedding objects (vector embeddings) in the same order as the input
             response = client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
+            # Pull out raw vector and add to our list
             all_embeddings.extend([item.embedding for item in response.data])
             print(f"  Embedded {min(i + BATCH_SIZE, len(texts))}/{len(texts)}")
 
-        # Persist vectors back to Neo4j in the same batching pattern to limit payload size per query.
+        # Because order was persisted, each og record is written with the corresponding vector
         print("Writing embeddings back to Neo4j...")
         for i in range(0, len(records), BATCH_SIZE):
             write_embeddings(
