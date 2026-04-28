@@ -59,6 +59,10 @@ python scripts/vector_app.py            # VectorCypherRetriever only
 python scripts/text2cypher_app.py       # Text2CypherRetriever only
 ```
 
+## Possible Functionality
+
+- **LLM-driven disambiguation** — when the same SKU appears multiple times in the retrieved context via different channels, GPT-4o-mini will spontaneously add a qualifier like `SKU-0014 (from content_syndication)` to distinguish them. This is emergent behavior from the model reading the pipe-delimited context strings — no code instructs it to do this.
+
 ## Example Responses
 
 See [examples.md](examples.md) for live responses from the graph across all five sample questions, including which retriever was used for each.
