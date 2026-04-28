@@ -104,12 +104,12 @@ def main():
                 print(f"\nQ: {q}")
                 # Set top_k to 10 to get the top 10 most relevant interactions
                 result = rag.search(query_text=q, retriever_config={"top_k": 10})
-                print(f"A: {result.answer}\n")
+                print(f"\n{'='*60}\n{result.answer}\n{'='*60}\n")
 
         # Run user question if user types anything else
         else:
             result = rag.search(query_text=user_input, retriever_config={"top_k": 10})
-            print(f"\nA: {result.answer}\n")
+            print(f"\n{'='*60}\n{result.answer}\n{'='*60}\n")
 
     driver.close()
 

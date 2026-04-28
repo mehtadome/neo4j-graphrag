@@ -122,12 +122,12 @@ def main():
                 print(f"\nQ: {q}")
                 # Same search settings as a normal question (see branch below for retriever_config).
                 result = rag.search(query_text=q)
-                print(f"A: {result.answer}\n")
+                print(f"\n{'='*60}\n{result.answer}\n{'='*60}\n")
 
         # Run user question if user types anything else
         else:
             result = rag.search(query_text=user_input)
-            print(f"\nA: {result.answer}\n")
+            print(f"\n{'='*60}\n{result.answer}\n{'='*60}\n")
 
     driver.close()
 
