@@ -59,6 +59,10 @@ python scripts/vector_app.py            # VectorCypherRetriever only
 python scripts/text2cypher_app.py       # Text2CypherRetriever only
 ```
 
+## Output Notes
+
+- **DBMS notifications only appear on VectorCypher questions** — two warnings fire each time the vector retriever runs: (1) `db.index.vector.queryNodes` is deprecated in newer Neo4j versions (the `neo4j-graphrag` library hasn't switched to the replacement yet), and (2) `LINKED_TO_DEAL` is flagged as unrecognized because that relationship was not created in the Aura instance. Text2Cypher questions generate their own Cypher and never touch the vector index or `LINKED_TO_DEAL`, so they produce no notifications.
+
 ## Possible Functionality
 
 - **LLM-driven disambiguation** — when the same SKU appears multiple times in the retrieved context via different channels, GPT-4o-mini will spontaneously add a qualifier like `SKU-0014 (from content_syndication)` to distinguish them. This is emergent behavior from the model reading the pipe-delimited context strings — no code instructs it to do this.
