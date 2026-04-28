@@ -96,6 +96,18 @@ CYPHER_EXAMPLES = [
     "Which campaigns have the best return on spend? => MATCH (i:Interaction)-[:DURING_CAMPAIGN]->(c:Campaign) WHERE i.spend_usd > 0 RETURN c.campaign_id, sum(i.revenue_usd)/sum(i.spend_usd) AS roi ORDER BY roi DESC LIMIT 5",
     "Which products have the highest revenue in the APAC region? => MATCH (cu:Customer)-[:HAD_INTERACTION]->(i:Interaction)-[:FOR_PRODUCT]->(p:Product) WHERE cu.region = 'APAC' AND i.revenue_usd > 0 RETURN p.product_id, sum(i.revenue_usd) AS total_revenue ORDER BY total_revenue DESC LIMIT 5",
 ]
+# Example 1:
+# Agency that managed a Campaign during which interactions occured that generated revenue
+
+# Example 2:
+# Interaction where event type is a purchase
+
+# Example 3:
+# Interaction during a campaign that generated revenue
+
+# Example 4:
+# Customers in the APAC region who had an interaction with a product that generated revenue
+
 
 SAMPLE_QUESTIONS = [
     # Hybrid — needs both retrievers
@@ -126,10 +138,11 @@ def classify_question(question: str) -> str:
         return "contextual"
 
 
-def build_retrievers(driver):
+def build_rags(driver):
     llm = OpenAILLM(model_name="gpt-4o-mini", model_params={"temperature": 0})
     embedder = OpenAIEmbeddings(model="text-embedding-3-small")
 
+    # create VectorCypherRetriever object
     vector_retriever = VectorCypherRetriever(
         driver=driver,
         index_name="interaction_embeddings",
@@ -137,13 +150,14 @@ def build_retrievers(driver):
         retrieval_query=RETRIEVAL_QUERY,
         result_formatter=lambda r: RetrieverResultItem(content=r.get("text", "")),
     )
+    # create Text2CypherRetriever object
     cypher_retriever = Text2CypherRetriever(
         driver=driver,
         llm=llm,
         neo4j_schema=NEO4J_SCHEMA,
         examples=CYPHER_EXAMPLES,
     )
-
+    # create GraphRAG objects
     vector_rag = GraphRAG(retriever=vector_retriever, llm=llm)
     cypher_rag = GraphRAG(retriever=cypher_retriever, llm=llm)
 
@@ -155,16 +169,19 @@ def search(vector_rag, cypher_rag, llm, question):
     Route the question and return an answer.
     Hybrid questions run both retrievers and pass combined context to the LLM.
     """
+    # Classify the question as contextual, aggregate, or hybrid
     mode = classify_question(question)
     print(f"[mode: {mode}]")
 
+    # If the question is contextual, use the VectorCypherRetriever
     if mode == "contextual":
         return vector_rag.search(query_text=question, retriever_config={"top_k": 10})
 
+    # If the question is aggregate, use the Text2CypherRetriever
     if mode == "aggregate":
         return cypher_rag.search(query_text=question)
 
-    # Hybrid: run both retrievers, concatenate results, synthesize with LLM
+    # If the question is hybrid, run both retrievers, concatenate results, synthesize with LLM
     vector_result = vector_rag.search(query_text=question, retriever_config={"top_k": 10})
     cypher_result = cypher_rag.search(query_text=question)
 
@@ -180,7 +197,7 @@ def search(vector_rag, cypher_rag, llm, question):
 
     # Use the LLM directly for final synthesis
     response = llm.invoke(synthesis_prompt)
-    # Wrap in a simple object that matches what callers expect
+    # Matches the object type returned by the GraphRAG.search()
     class Result:
         def __init__(self, answer):
             self.answer = answer
@@ -192,22 +209,30 @@ def main():
         NEO4J_URI.replace("neo4j+s://", "neo4j+ssc://"),
         auth=(NEO4J_USER, NEO4J_PASSWORD),
     )
-    vector_rag, cypher_rag, llm = build_retrievers(driver)
+    # build the two GraphRAG objects and return the chosen LLM
+    vector_rag, cypher_rag, llm = build_rags(driver)
 
     print("\nMarketing GraphRAG (Hybrid Fusion) — type a question or 'demo' to run sample questions.\n")
 
     while True:
         user_input = input("Question: ").strip()
+        # Continue if user types nothing
         if not user_input:
             continue
+        # Exit if user types exit or quit
         if user_input.lower() in ("exit", "quit"):
             break
+        # Run sample questions if user types demo
         if user_input.lower() == "demo":
             for q in SAMPLE_QUESTIONS:
                 print(f"\nQ: {q}")
+                # Custom search to handle both retriever types
                 result = search(vector_rag, cypher_rag, llm, q)
                 print(f"A: {result.answer}\n")
+
+        # Run user question if user types anything else
         else:
+            # Custom search to handle both retriever types
             result = search(vector_rag, cypher_rag, llm, user_input)
             print(f"\nA: {result.answer}\n")
 
