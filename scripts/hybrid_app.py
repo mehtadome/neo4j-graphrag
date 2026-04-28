@@ -225,7 +225,7 @@ def main():
         # Run sample questions if user types demo
         if user_input.lower() == "demo":
             for q in SAMPLE_QUESTIONS:
-                print(f"\nQ: {q}")
+                print(f"\nQ: {q}\n")
                 # Custom search to handle both retriever types
                 result = search(vector_rag, cypher_rag, llm, q)
                 print(f"\n\n{'='*60}\n{result.answer}\n{'='*60}\n")

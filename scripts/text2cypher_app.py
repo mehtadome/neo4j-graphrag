@@ -119,7 +119,7 @@ def main():
         # Run sample questions if user types demo
         if user_input.lower() == "demo":
             for q in SAMPLE_QUESTIONS:
-                print(f"\nQ: {q}")
+                print(f"\nQ: {q}\n")
                 # Same search settings as a normal question (see branch below for retriever_config).
                 result = rag.search(query_text=q)
                 print(f"\n\n{'='*60}\n{result.answer}\n{'='*60}\n")
