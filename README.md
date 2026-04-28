@@ -2,6 +2,10 @@
 
 Marketing attribution GraphRAG demo built on Neo4j Aura. The project was built in two phases: first a custom local Python agent with full control over retrieval and routing, then a no-code Aura Console Agent layered on the same graph.
 
+**The core tradeoff between an Aura Agent and a custom pipeline:**
+* Aura's agent is zero setup and controls everything itself.
+* `hybrid_app` requires wiring everything yourself but gives you full control over the model, routing logic, retrieval query, and prompts.
+
 ## Architecture
 
 There are two interfaces to the same Neo4j graph:
