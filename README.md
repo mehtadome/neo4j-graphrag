@@ -61,6 +61,8 @@ python scripts/text2cypher_app.py       # Text2CypherRetriever only
 
 ## Output Notes
 
+- **Text2Cypher queries are capped at LIMIT 10** — the LLM-generated Cypher can return unbounded rows if not constrained. On hybrid questions, those rows get passed into the GPT-4o-mini context alongside the vector results, which caused a 193k token request against a 128k limit. The limit is enforced via the schema instruction and few-shot examples passed to the retriever.
+
 - **DBMS notifications only appear on VectorCypher questions** — two warnings fire each time the vector retriever runs: (1) `db.index.vector.queryNodes` is deprecated in newer Neo4j versions (the `neo4j-graphrag` library hasn't switched to the replacement yet), and (2) `LINKED_TO_DEAL` is flagged as unrecognized because that relationship was not created in the Aura instance. Text2Cypher questions generate their own Cypher and never touch the vector index or `LINKED_TO_DEAL`, so they produce no notifications.
 
 ## Possible Functionality
